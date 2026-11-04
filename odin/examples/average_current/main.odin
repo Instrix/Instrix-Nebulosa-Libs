@@ -47,7 +47,7 @@ main :: proc() {
 	buf := make([]nb.Sample, 4096)
 	defer delete(buf)
 	sum_i, sum_v, sum_p: f64
-	min_i, max_i := 1e300, -1e300
+	min_i, max_i: f64 = 1e300, -1e300
 	count, dirty := 0, 0
 	first_ts, last_ts: u64
 	start := time.tick_now()
