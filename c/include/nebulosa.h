@@ -19,7 +19,17 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "nbp.h"
+/* nbp.h is the firmware's header, verbatim: GCC / Clang syntax for packing.
+ * MSVC gets the same layout through #pragma pack. */
+#if defined(_MSC_VER) && !defined(__clang__)
+#  pragma pack(push, 1)
+#  define __attribute__(x)
+#  include "nbp.h"
+#  undef __attribute__
+#  pragma pack(pop)
+#else
+#  include "nbp.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

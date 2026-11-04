@@ -1,0 +1,54 @@
+# Builds the wiki (MkDocs, docs/) plus the Rust API docs and deploys them
+# to GitHub Pages: https://instrix.github.io/Instrix-Nebulosa-Libs/
+#
+# One-time setup: repository Settings -> Pages -> Source: "GitHub Actions".
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: libusb (for the usb feature's docs)
+        run: sudo apt-get update && sudo apt-get install -y libusb-1.0-0-dev
+      - name: Rust API docs
+        working-directory: rust
+        run: cargo doc --no-deps --all-features
+      - name: Site
+        run: |
+          mkdir -p docs/api
+          cp -r rust/target/doc docs/api/rust
+          pip install -r docs/requirements.txt
+          mkdocs build --strict
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

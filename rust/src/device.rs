@@ -199,11 +199,23 @@ pub struct Device {
     timeouts: Timeouts,
     cal: Calibration,
     st: StreamState,
+    /// a STREAM_START this connection sent was answered OK (stopped on drop)
+    streaming: bool,
 }
 
 impl fmt::Debug for Device {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Device").field("transport", &self.t.describe()).finish_non_exhaustive()
+    }
+}
+
+impl Drop for Device {
+    /// Stops a stream this connection started (best effort): over USB the
+    /// device would otherwise keep streaming into a link nobody reads.
+    fn drop(&mut self) {
+        if self.streaming {
+            let _ = self.transact(cmd::STREAM_STOP, &[], Duration::from_millis(300));
+        }
     }
 }
 
@@ -233,6 +245,7 @@ impl Device {
             timeouts: Timeouts::default(),
             cal: Calibration::default(),
             st: StreamState::default(),
+            streaming: false,
         }
     }
 
@@ -373,12 +386,17 @@ impl Device {
         self.data_q.clear();
         self.reset_stream_state();
         self.st.wait_first = true;
-        self.req(cmd::STREAM_START, &opts.flags().to_le_bytes()).map(drop)
+        self.req(cmd::STREAM_START, &opts.flags().to_le_bytes())?;
+        self.streaming = true;
+        Ok(())
     }
 
-    /// STREAM_STOP. DATA already received stays readable.
+    /// STREAM_STOP. DATA already received stays readable. Dropping the
+    /// `Device` does this too, for a stream it started.
     pub fn stop_stream(&mut self) -> Result<()> {
-        self.req(cmd::STREAM_STOP, &[]).map(drop)
+        self.req(cmd::STREAM_STOP, &[])?;
+        self.streaming = false;
+        Ok(())
     }
 
     /// GET_STATS: device side stream statistics.

@@ -2,9 +2,9 @@
 
 Every language binding in this repository implements the same model, with
 names adapted to the language's conventions. The wire definition is
-[`spec/nbp.h`](../spec/nbp.h) (NBP, copied verbatim from
+[`spec/nbp.h`](https://github.com/Instrix/Instrix-Nebulosa-Libs/blob/main/spec/nbp.h) (NBP, copied verbatim from
 Instrix-Nebulosa-Firmware `common/nbp/nbp.h`) and
-[`spec/neb_stream.h`](../spec/neb_stream.h) (FPGA sample stream, format 5).
+[`spec/neb_stream.h`](https://github.com/Instrix/Instrix-Nebulosa-Libs/blob/main/spec/neb_stream.h) (FPGA sample stream, format 5).
 When the firmware changes, re-copy both and update the bindings.
 
 ## 1. Transports

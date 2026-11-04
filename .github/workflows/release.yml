@@ -1,0 +1,103 @@
+# Release on a version tag (vX.Y.Z): builds the packages and attaches them
+# to a GitHub Release. Publishing to package registries is opt-in:
+#
+#   PyPI:      create the project on PyPI, add a "trusted publisher" for this
+#              repository / workflow release.yml / environment "pypi", then
+#              set the repository variable PUBLISH_PYPI = true.
+#   crates.io: add the secret CARGO_REGISTRY_TOKEN, then set the repository
+#              variable PUBLISH_CRATES = true.
+#
+# The tag must match python/pyproject.toml and rust/Cargo.toml.
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Versions match the tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          py=$(sed -n 's/^version = "\(.*\)"/\1/p' python/pyproject.toml | head -1)
+          rs=$(sed -n 's/^version = "\(.*\)"/\1/p' rust/Cargo.toml | head -1)
+          c=$(sed -n 's/.*project(nebulosa VERSION \([0-9.]*\).*/\1/p' c/CMakeLists.txt)
+          echo "tag $tag, python $py, rust $rs, c $c"
+          [ "$tag" = "$py" ] && [ "$tag" = "$rs" ] && [ "$tag" = "$c" ]
+
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Python wheel and sdist
+        run: |
+          python -m pip install build
+          python -m build python --outdir dist
+      - name: Rust crate
+        working-directory: rust
+        run: |
+          cargo package --allow-dirty
+          cp target/package/*.crate ../dist/
+      - name: C / C++ / Odin sources
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          git archive --format=tar.gz --prefix="nebulosa-c-cpp-$v/" -o "dist/nebulosa-c-cpp-$v.tar.gz" HEAD c cpp spec tools docs/API.md README.md
+          git archive --format=tar.gz --prefix="nebulosa-odin-$v/" -o "dist/nebulosa-odin-$v.tar.gz" HEAD odin spec tools docs/API.md README.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+
+  pypi:
+    needs: build
+    if: vars.PUBLISH_PYPI == 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Keep only the Python files
+        run: find dist -type f ! -name '*.whl' ! -name '*.tar.gz' -delete && rm -f dist/nebulosa-c-cpp-* dist/nebulosa-odin-*
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  crates:
+    needs: build
+    if: vars.PUBLISH_CRATES == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - working-directory: rust
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish

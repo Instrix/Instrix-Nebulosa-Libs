@@ -31,7 +31,7 @@ fn free_udp_port() -> u16 {
 fn sim_with(extra: &[String]) -> Sim {
     let script = concat!(env!("CARGO_MANIFEST_DIR"), "/../tools/nebulosa_sim.py");
     let port = free_tcp_port();
-    let mut child = Command::new("python3")
+    let mut child = Command::new(std::env::var("NEBULOSA_PYTHON").unwrap_or_else(|_| "python3".into()))
         .arg(script)
         .args(["--host", "127.0.0.1", "--port", &port.to_string()])
         .args(extra)

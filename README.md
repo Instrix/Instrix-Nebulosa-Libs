@@ -1,5 +1,11 @@
 # Instrix-Nebulosa-Libs
 
+[![CI](https://github.com/Instrix/Instrix-Nebulosa-Libs/actions/workflows/ci.yml/badge.svg)](https://github.com/Instrix/Instrix-Nebulosa-Libs/actions/workflows/ci.yml)
+[![Docs](https://github.com/Instrix/Instrix-Nebulosa-Libs/actions/workflows/docs.yml/badge.svg)](https://instrix.github.io/Instrix-Nebulosa-Libs/)
+
+**Documentation: <https://instrix.github.io/Instrix-Nebulosa-Libs/>** (getting
+started, concepts, and a guide per language; sources in `docs/`).
+
 Developer libraries for the **INSTRIX Nebulosa** power profiler: control the
 device and stream its samples from your own scripts and programs, over TCP or
 USB, without the Companion app.
@@ -10,7 +16,7 @@ USB, without the Companion app.
 | C99 | [`c/`](c) | TCP, UDP discovery, USB (libusb-1.0) | tested: simulator + hardware (USB, 2 MSPS lossless) |
 | C++17 | [`cpp/`](cpp) | header-only wrapper over the C library | tested: simulator + hardware |
 | Rust | [`rust/`](rust) | TCP, UDP discovery, USB (`usb` feature, rusb) | tested: simulator + hardware (USB, 2 MSPS lossless) |
-| Odin | [`odin/`](odin) | TCP, UDP discovery, USB (libusb-1.0, async) | written, **not yet compiled** (no odin toolchain here) |
+| Odin | [`odin/`](odin) | TCP, UDP discovery, USB (libusb-1.0, async) | experimental: compiled and tested in CI only |
 
 Every binding implements the same model, described in
 [`docs/API.md`](docs/API.md):
@@ -41,7 +47,8 @@ with nebulosa.Nebulosa.usb() as dev:            # or Nebulosa.tcp("192.168.1.20"
 ```
 spec/        nbp.h, neb_stream.h: the protocol definition, copied verbatim from
              Instrix-Nebulosa-Firmware (common/nbp, common/fpga)
-docs/API.md  the common API contract + wire details for binding authors
+docs/        the documentation site (MkDocs); docs/API.md: the API contract + wire details
+.github/     CI (all test suites), docs deploy to GitHub Pages, tag releases
 tools/       nebulosa_sim.py (a fake device for tests), 99-nebulosa.rules (Linux udev)
 python/ c/ cpp/ rust/ odin/
 ```
