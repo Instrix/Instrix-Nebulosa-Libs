@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 3.14)
+project(nebulosa_cpp VERSION 0.1.0 LANGUAGES C CXX)
+
+# nebulosa.hpp: header-only C++17 wrapper over libnebulosa (../c).
+option(NEBULOSA_CPP_BUILD_EXAMPLES "Build the C++ examples" ${PROJECT_IS_TOP_LEVEL})
+option(NEBULOSA_CPP_BUILD_TESTS "Build the C++ tests" ${PROJECT_IS_TOP_LEVEL})
+
+if(NOT TARGET nebulosa)
+    set(NEBULOSA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(NEBULOSA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../c ${CMAKE_CURRENT_BINARY_DIR}/libnebulosa)
+endif()
+
+add_library(nebulosa_cpp INTERFACE)
+add_library(nebulosa::cpp ALIAS nebulosa_cpp)
+target_include_directories(nebulosa_cpp INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+target_link_libraries(nebulosa_cpp INTERFACE nebulosa)
+target_compile_features(nebulosa_cpp INTERFACE cxx_std_17)
+install(FILES include/nebulosa.hpp DESTINATION include)
+
+if(NEBULOSA_CPP_BUILD_EXAMPLES)
+    foreach(ex info stream_csv average_current)
+        add_executable(nebulosa_cpp_${ex} examples/${ex}.cpp)
+        target_link_libraries(nebulosa_cpp_${ex} PRIVATE nebulosa_cpp)
+    endforeach()
+endif()
+
+if(NEBULOSA_CPP_BUILD_TESTS)
+    enable_testing()
+    add_executable(nebulosa_cpp_test tests/test.cpp)
+    target_link_libraries(nebulosa_cpp_test PRIVATE nebulosa_cpp)
+    if(NOT MSVC)
+        target_compile_options(nebulosa_cpp_test PRIVATE -Wall -Wextra)
+    endif()
+    find_package(Python3 COMPONENTS Interpreter)
+    if(Python3_FOUND)
+        add_test(NAME cpp_sim COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../c/tests/run_with_sim.py
+            ${CMAKE_CURRENT_SOURCE_DIR}/../tools/nebulosa_sim.py $<TARGET_FILE:nebulosa_cpp_test>)
+    endif()
+endif()

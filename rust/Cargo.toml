@@ -1,0 +1,21 @@
+[package]
+name = "nebulosa"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+description = "Developer library for the INSTRIX Nebulosa power profiler: NBP over TCP or USB, sample stream decoding, board and update commands"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["power-profiler", "instrumentation", "usb", "nebulosa", "nbp"]
+categories = ["hardware-support", "science"]
+
+[features]
+default = []
+## USB transport (libusb through `rusb`; needs libusb-1.0 installed).
+usb = ["dep:rusb"]
+
+[dependencies]
+rusb = { version = "0.9", optional = true }
+
+[package.metadata.docs.rs]
+all-features = true

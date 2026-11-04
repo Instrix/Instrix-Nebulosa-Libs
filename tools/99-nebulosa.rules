@@ -1,0 +1,9 @@
+# Nebulosa NBP devices (nanoCH32H417 firmware): let normal users open them
+# with libusb.
+#   1a86:fe0c  USB Full-Speed (USB-C port, next to the trice CDC log port)
+#   1a86:fe0d  USB High-Speed (USB 3.0 Type-A port)
+#
+#   sudo cp tools/99-nebulosa.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload && sudo udevadm trigger
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="fe0c", MODE="0666"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="fe0d", MODE="0666"

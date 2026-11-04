@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nebulosa"
+version = "0.1.0"
+description = "Developer library for the INSTRIX Nebulosa power profiler (NBP over TCP / USB)"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "INSTRIX" }]
+dependencies = []
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+usb = ["pyusb>=1.2"]
+numpy = ["numpy"]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+nebulosa = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
